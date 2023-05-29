@@ -43,3 +43,15 @@ vet:
 .PHONY: lint
 lint:
 	golangci-lint run ./...
+
+.PHONY: fmt
+fmt:
+	go fmt ./...
+
+.PHONY: container-build
+container-build:
+	podman build -t ${BINARY_NAME} .
+
+.PHONY: container-run
+container-run: container-build
+	podman run -p 8080:8080 ${BINARY_NAME}
