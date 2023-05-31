@@ -1,10 +1,10 @@
 package store_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/maxenceadnot/synthetic/internal/api/store"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestURLCheckStore(t *testing.T) {
@@ -32,53 +32,31 @@ func TestURLCheckStore(t *testing.T) {
 		},
 	}
 
+	getError := func(_ any, err error) error {
+		return err
+	}
+
+	assert := assert.New(t)
+
 	t.Run("Create a new url check store", func(t *testing.T) {
 		inmemStore := store.NewInMemoryURLCheckStore(urlChecks)
 
-		if len(inmemStore.GetURLChecks()) != len(urlChecks) {
-			t.Errorf("Got %v, want %v", len(inmemStore.GetURLChecks()), len(urlChecks))
-		}
+		assert.Len(inmemStore.GetURLChecks(), len(urlChecks))
+		assert.Len(inmemStore.GetURLChecksByAccount(1), 2)
+		assert.Len(inmemStore.GetURLChecksByAccount(2), 1)
+		assert.Len(inmemStore.GetURLChecksByAccount(3), 0)
 
-		if len(inmemStore.GetURLChecksByAccount(1)) != 2 {
-			t.Errorf("Got %v, want %v", len(inmemStore.GetURLChecksByAccount(1)), 2)
-		}
+		assert.NoError(getError(inmemStore.GetURLCheckByID(1)))
 
-		if len(inmemStore.GetURLChecksByAccount(2)) != 1 {
-			t.Errorf("Got %v, want %v", len(inmemStore.GetURLChecksByAccount(2)), 1)
-		}
+		assert.EqualError(getError(inmemStore.GetURLCheckByID(4)), store.ErrURLCheckNotFound.Error())
 
-		if len(inmemStore.GetURLChecksByAccount(3)) != 0 {
-			t.Errorf("Got %v, want %v", len(inmemStore.GetURLChecksByAccount(3)), 0)
-		}
+		assert.NoError(inmemStore.DeleteURLCheck(1))
+		assert.EqualError(inmemStore.DeleteURLCheck(4), store.ErrURLCheckNotFound.Error())
 
-		if _, err := inmemStore.GetURLCheckByID(1); err != nil {
-			t.Errorf("Got %v, want %v", err, nil)
-		}
-
-		if _, err := inmemStore.GetURLCheckByID(4); err == nil {
-			t.Errorf("Got %v, want %v", err, fmt.Errorf("url check not found"))
-		}
-
-		if err := inmemStore.DeleteURLCheck(1); err != nil {
-			t.Errorf("Got %v, want %v", err, nil)
-		}
-
-		if err := inmemStore.DeleteURLCheck(4); err == nil {
-			t.Errorf("Got %v, want %v", err, fmt.Errorf("url check not found"))
-		}
-
-		if len(inmemStore.GetURLChecks()) != 2 {
-			t.Errorf("Got %v, want %v", len(inmemStore.GetURLChecks()), 2)
-		}
+		assert.Len(inmemStore.GetURLChecks(), len(urlChecks)-1)
 
 		newCheck, _ := store.NewURLCheck(1, "https://www.google.com", "GET", 200)
-
-		if err := inmemStore.AddURLCheck(*newCheck); err != nil {
-			t.Errorf("Got %v, want %v", err, nil)
-		}
-
-		if len(inmemStore.GetURLChecks()) != 3 {
-			t.Errorf("Got %v, want %v", len(inmemStore.GetURLChecks()), 3)
-		}
+		assert.NoError(inmemStore.AddURLCheck(*newCheck))
+		assert.Len(inmemStore.GetURLChecks(), len(urlChecks))
 	})
 }

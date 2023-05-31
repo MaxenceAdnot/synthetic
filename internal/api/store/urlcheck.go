@@ -1,11 +1,21 @@
 package store
 
 import (
-	"fmt"
-
 	"github.com/maxenceadnot/synthetic/pkg/api/utils"
 
 	"github.com/google/uuid"
+)
+
+type URLCheckError string
+
+func (e URLCheckError) Error() string {
+	return string(e)
+}
+
+const (
+	ErrInvalidURL        = URLCheckError("invalid url")
+	ErrInvalidMethod     = URLCheckError("invalid method")
+	ErrInvalidHTTPStatus = URLCheckError("invalid expected status")
 )
 
 type URLCheck struct {
@@ -18,15 +28,15 @@ type URLCheck struct {
 
 func NewURLCheck(accountID uint32, url, method string, expectedStatus int) (*URLCheck, error) {
 	if !utils.IsURL(url) {
-		return nil, fmt.Errorf("invalid url")
+		return nil, ErrInvalidURL
 	}
 
 	if !utils.IsHTTPMethod(method) {
-		return nil, fmt.Errorf("invalid method")
+		return nil, ErrInvalidMethod
 	}
 
 	if !utils.IsHTTPStatusCode(expectedStatus) {
-		return nil, fmt.Errorf("invalid expected status")
+		return nil, ErrInvalidHTTPStatus
 	}
 
 	return &URLCheck{

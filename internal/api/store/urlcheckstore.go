@@ -2,6 +2,16 @@ package store
 
 import "fmt"
 
+type URLCheckStoreError string
+
+func (e URLCheckStoreError) Error() string {
+	return string(e)
+}
+
+const (
+	ErrURLCheckNotFound = URLCheckStoreError("url check not found")
+)
+
 type URLCheckStore interface {
 	GetURLChecks() []URLCheck
 	GetURLCheckByID(id uint32) (*URLCheck, error)
